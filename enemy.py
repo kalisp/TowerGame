@@ -31,7 +31,7 @@ class Enemy(pygame.sprite.Sprite):
 
 
     def draw(self, screen):
-        ''' Draws surface and calls move()'''
+        ''' Draws surface '''
         #self.surface.fill((50, 50, 50))
         url = self.images[self.animation_step]
         image = pygame.image.load(url)
@@ -46,9 +46,8 @@ class Enemy(pygame.sprite.Sprite):
         current_health = pygame.Rect(self.x - 44, self.y - 32, self.width * self.current_health / self.max_health , 4)
         pygame.draw.rect(screen, pygame.Color('green'), current_health)
 
-        self.move()
-
     def move(self):
+        ''' Calls move, triggered only if game is not paused'''
         if self.path_position < len(self.path):
             speed = 5
             current_pos = pygame.math.Vector2(self.x, self.y)
@@ -61,8 +60,8 @@ class Enemy(pygame.sprite.Sprite):
                     if next_pos_vector.x < current_pos.x:
                         self.moving_right = False
 
-            direction = (next_pos_vector - current_pos).normalize()
-            current_pos += speed * direction
+            direction = (next_pos_vector - current_pos).normalize()  # get normalized vector from current to next pos
+            current_pos += speed * direction  # increment current position along the diretion vector
 
             self.x, self.y = current_pos
 
