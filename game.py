@@ -17,6 +17,8 @@ heart_image = pygame.transform.scale(pygame.image.load(os.path.join("game_assets
 button_pause_image = pygame.transform.scale(pygame.image.load(os.path.join("game_assets", "button_pause.png")), (64, 64))
 button_play_image = pygame.transform.scale(pygame.image.load(os.path.join("game_assets", "button_play.png")), (64, 64))
 
+tower_menu_image = pygame.transform.scale(pygame.image.load(os.path.join("game_assets", "menu", "table.png")), (64, 64))
+
 # n arrays, where each item denotes count of enemies of specific type
 # type of enemies:
 waves = [
@@ -38,7 +40,7 @@ class Game:
         self.enemies.append(Enemy('tiny'))  # testing
 
         self.towers = []
-        self.towers.append(Tower('archer_long'))  # testing
+        self.towers.append(Tower('archer_long', self))  # testing
 
         self.running = True
         self.clock = pygame.time.Clock()
@@ -94,13 +96,20 @@ class Game:
                             if event.button == pygame.BUTTON_RIGHT:
                                 # not sure if this should be here at all, if shouldnt be handled by Tower.draw
                                 if not self.tower_menu:
-                                    self.tower_menu = menu.TowerMenu(pos, tower)
+                                    self.tower_menu = menu.TowerMenu(pos, tower, tower_menu_image)
+
+                    # handle tower menu
+                    if self.tower_menu:
+                        btn_clicked = self.tower_menu.item_clicked(pos)
+                        if btn_clicked:
+                            btn_clicked.action(self.selected_tower)
+                            self.tower_menu = None #  remove menu after click
 
                 if event.type == pygame.MOUSEMOTION and mouse_dragging and self.paused: # move tower only if paused
                     pos = pygame.mouse.get_pos()
                     self.selected_tower.move(pos)
 
-                if event.type == pygame.MOUSEBUTTONUP: # end dragging
+                if mouse_dragging and event.type == pygame.MOUSEBUTTONUP: # end dragging
                     self.selected_tower = None
                     mouse_dragging = False
 
@@ -119,8 +128,13 @@ class Game:
                         self.current_wave_enemies = waves[self.wave_number]
 
                 # resolve shooting
+                to_del = []
                 for tower in self.towers:
-                    tower.attack(self.enemies)
+                    if not tower.destroyed:
+                        tower.attack(self.enemies)
+                    else:  # remove sold towers
+                        to_del.append(tower)
+                self.towers = [tower for tower in self.towers if tower not in to_del]
 
                 to_del = []
                 for enemy in self.enemies:

@@ -1,15 +1,19 @@
 import pygame
 
+import os
+
 class Button():
 
-    def __init__(self):
-        self.x = 0
-        self.y = 0
+    def __init__(self, img, pos):
+        self.x = pos[0]
+        self.y = pos[1]
         self.width = 64
         self.height = 64
 
+        self.img = img
+
     def draw(self, screen):
-        pass
+        screen.blit(self.img, (self.x, self.y))
 
     # def get_rect(self):
     #     ''' Get bounding rectangle for checking if clicked
@@ -42,3 +46,26 @@ class PlayPauseButton(Button):
         else:
             img = self.play_img
         screen.blit(img, (self.x, self.y))
+
+class UpgradeButton(Button):
+    ''' Small button for TowerMenu '''
+    def __init__(self, img, pos):
+        super(UpgradeButton, self).__init__(img, pos)
+        self.img = img
+        self.width = img.get_width()
+        self.height = img.get_height()
+
+    def action(self, tower):
+        tower.upgrade()
+
+    def update_position(self, pos):
+        self.x, self.y = pos[0], pos[1]
+
+class DestroyButton(UpgradeButton):
+    ''' Small button for TowerMenu - to sell/destroy tower'''
+    def __init__(self, img, pos):
+        #super.__init(img, pos)
+        super(DestroyButton, self).__init__(img, pos)
+
+    def action(self, tower):
+        tower.sell()
