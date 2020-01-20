@@ -1,9 +1,8 @@
 import pygame
-import random
 import os
 
 from enemy import Enemy
-from tower import Tower
+from towers.tower import Tower
 from menu import button
 from menu import menu
 
@@ -19,11 +18,14 @@ button_play_image = pygame.transform.scale(pygame.image.load(os.path.join("game_
 
 tower_menu_image = pygame.transform.scale(pygame.image.load(os.path.join("game_assets", "menu", "table.png")), (64, 64))
 
+win_image = pygame.transform.scale(pygame.image.load(os.path.join("game_assets", "menu", "header_win.png")), (128, 65))
+fail_image = pygame.transform.scale(pygame.image.load(os.path.join("game_assets", "menu", "header_failed.png")), (128, 64))
+
 # n arrays, where each item denotes count of enemies of specific type
 # type of enemies:
 waves = [
-    [5, 0, 0, 0],
-    [10, 0, 0, 0]
+    [2, 0, 0, 0],
+    [5, 0, 0, 0]
 ]
 
 class Game:
@@ -64,6 +66,9 @@ class Game:
         self.playButton = button.PlayPauseButton(button_play_image, button_pause_image, (self.width * 0.04, self.height * 0.85))
         self.tower_menu = None  # to display menu on RMB on Tower
 
+        self.new_towers_menu = menu.NewTowersMenu((self.width * 0.92, self.height * 0.68), tower_menu_image)
+        self.win_or_lose = 0 # -1 lose, 0 running, 1 win
+
     def run(self):
         tick = 1
         more_enemies = False
@@ -82,6 +87,7 @@ class Game:
 
                     if self.playButton.clicked(pos):  # clicked on Play/Pause
                         self.paused = not self.paused
+                        self.win_or_lose = 0  # reset
 
                     if event.button == pygame.BUTTON_RIGHT: # RMB deletes existing TowerMenu from everywhere
                         if self.tower_menu:
@@ -105,6 +111,12 @@ class Game:
                             btn_clicked.action(self.selected_tower)
                             self.tower_menu = None #  remove menu after click
 
+                     # handle new tower menu
+                    if self.new_towers_menu:
+                         new_tower = self.new_towers_menu.item_clicked(pos)
+                         if new_tower:
+                             self.towers.append(new_tower.action(self)) # initialize new tower, inject game instance
+
                 if event.type == pygame.MOUSEMOTION and mouse_dragging and self.paused: # move tower only if paused
                     pos = pygame.mouse.get_pos()
                     self.selected_tower.move(pos)
@@ -124,8 +136,6 @@ class Game:
                                 break
                     else:
                         moreEnemies = False
-                        self.wave_number = (self.wave_number + 1) % len(waves) # TODO add end of game
-                        self.current_wave_enemies = waves[self.wave_number]
 
                 # resolve shooting
                 to_del = []
@@ -153,7 +163,14 @@ class Game:
                 if self.enemies == [] and not moreEnemies:
                     # last enemy in the wave killed, stop game
                     self.paused = True
-                    
+                    self.win_or_lose = 1  # TODO constant instead of number
+                    self.wave_number = (self.wave_number + 1) % len(waves)
+                    self.current_wave_enemies = waves[self.wave_number]
+
+                if self.lives <= 0:
+                    self.paused = True
+                    self.win_or_lose = -1  # TODO constant instead of number
+
                 self.clock.tick(30)
                 tick += 1
 
@@ -186,6 +203,15 @@ class Game:
         # draw tower menu
         if self.tower_menu:
             self.tower_menu.draw(self.screen)
+
+        # draw add tower menu
+        self.new_towers_menu.draw(self.screen)
+
+        if self.win_or_lose != 0:
+            if self.win_or_lose == 1:
+                self.screen.blit(win_image, ((self.width - win_image.get_width()) / 2, self.height * 0.5))
+            else:
+                self.screen.blit(fail_image, ((self.width - fail_image.get_width()) / 2, self.height * 0.5))
 
         pygame.display.flip()
 

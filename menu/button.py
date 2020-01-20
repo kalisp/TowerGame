@@ -1,5 +1,7 @@
 import pygame
 
+from towers import tower
+
 import os
 
 class Button():
@@ -27,6 +29,10 @@ class Button():
 
         return rect.collidepoint(pos)
 
+    def set_position(self, pos):
+        '''Called when new positione need to be set before drawing. (Because of offsets, or not enough screen etc.'''
+        self.x, self.y = pos[0], pos[1]
+
 class PlayPauseButton(Button):
     ''' Display Play/Pause button and check if mouse clicked '''
     def __init__(self, play_img, pause_img, pos):
@@ -41,10 +47,10 @@ class PlayPauseButton(Button):
         self.paused = paused
 
     def draw(self, screen):
-        if self.paused:  # picture depends on state of game
-            img = self.pause_img
-        else:
+        if self.paused:  # picture depends on state of game, paused == show play button to unpause
             img = self.play_img
+        else:
+            img = self.pause_img
         screen.blit(img, (self.x, self.y))
 
 class UpgradeButton(Button):
@@ -58,14 +64,26 @@ class UpgradeButton(Button):
     def action(self, tower):
         tower.upgrade()
 
-    def update_position(self, pos):
-        self.x, self.y = pos[0], pos[1]
 
 class DestroyButton(UpgradeButton):
     ''' Small button for TowerMenu - to sell/destroy tower'''
     def __init__(self, img, pos):
-        #super.__init(img, pos)
         super(DestroyButton, self).__init__(img, pos)
 
     def action(self, tower):
         tower.sell()
+
+class AddArcherTowerButton(Button):
+
+    def action(self, game_instance):
+        return tower.ArcherTower(game_instance)
+
+class AddArcherLongTowerButton(Button):
+
+    def action(self, game_instance):
+        return tower.ArcherLongTower(game_instance)
+
+class AddBoltTowerButton(Button):
+
+    def action(self, game_instance):
+        return tower.BoltTower(game_instance)
